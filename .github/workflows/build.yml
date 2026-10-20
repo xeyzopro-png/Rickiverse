@@ -21,35 +21,21 @@ jobs:
 
       - name: Extraire le projet
         run: |
-          mkdir -p source
           unzip -oq Rickiverse-Forge-1.16.5-Source.zip -d source
-          echo "Contenu de l'archive :"
-          find source -maxdepth 4 -type f | head -100
 
-      - name: Rechercher Gradle
+      - name: Installer Gradle
         run: |
-          find source -type f \( -name gradlew -o -name build.gradle -o -name build.gradle.kts \)
+          wget https://services.gradle.org/distributions/gradle-6.8.3-bin.zip
+          unzip -q gradle-6.8.3-bin.zip
+          echo "$GITHUB_WORKSPACE/gradle-6.8.3/bin" >> "$GITHUB_PATH"
 
-      - name: Compiler le mod
+      - name: Compiler RICKIVERSE
         run: |
-          GRADLE_FILE=$(find source -type f -name build.gradle | head -1)
-          if [ -z "$GRADLE_FILE" ]; then
-            echo "ERREUR : aucun build.gradle trouvé dans l'archive."
-            exit 1
-          fi
-          PROJECT_DIR=$(dirname "$GRADLE_FILE")
-          cd "$PROJECT_DIR"
-          if [ -f gradlew ]; then
-            chmod +x gradlew
-            ./gradlew build --no-daemon
-          else
-            echo "ERREUR : le projet ne contient pas gradlew."
-            exit 1
-          fi
+          cd source/rickiverse-1165
+          gradle build --no-daemon
 
-      - name: Publier le résultat
-        if: success()
+      - name: Télécharger le mod compilé
         uses: actions/upload-artifact@v4
         with:
-          name: Rickiverse-Minecraft-1.16.5-Forge
-          path: source/**/build/libs/*.jar
+          name: RICKIVERSE-1.16.5
+          path: source/rickiverse-1165/build/libs/*.jar

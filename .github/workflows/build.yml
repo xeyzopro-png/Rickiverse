@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Télécharger le projet
+      - name: Télécharger le dépôt
         uses: actions/checkout@v4
 
       - name: Installer Java 8
@@ -21,17 +21,35 @@ jobs:
 
       - name: Extraire le projet
         run: |
-          unzip -q Rickiverse-Forge-1.16.5-Source.zip -d source
-          find source -maxdepth 3 -type f | head -50
+          mkdir -p source
+          unzip -oq Rickiverse-Forge-1.16.5-Source.zip -d source
+          echo "Contenu de l'archive :"
+          find source -maxdepth 4 -type f | head -100
+
+      - name: Rechercher Gradle
+        run: |
+          find source -type f \( -name gradlew -o -name build.gradle -o -name build.gradle.kts \)
 
       - name: Compiler le mod
         run: |
-          cd source
-          chmod +x gradlew
-          ./gradlew build --no-daemon
+          GRADLE_FILE=$(find source -type f -name build.gradle | head -1)
+          if [ -z "$GRADLE_FILE" ]; then
+            echo "ERREUR : aucun build.gradle trouvé dans l'archive."
+            exit 1
+          fi
+          PROJECT_DIR=$(dirname "$GRADLE_FILE")
+          cd "$PROJECT_DIR"
+          if [ -f gradlew ]; then
+            chmod +x gradlew
+            ./gradlew build --no-daemon
+          else
+            echo "ERREUR : le projet ne contient pas gradlew."
+            exit 1
+          fi
 
       - name: Publier le résultat
+        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: Rickiverse-Minecraft-1.16.5-Forge
-          path: source/build/libs/*.jar
+          path: source/**/build/libs/*.jar

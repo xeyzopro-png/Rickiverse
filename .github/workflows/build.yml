@@ -3,46 +3,49 @@ name: Build RICKIVERSE
 on:
   workflow_dispatch:
   push:
-    branches: [main]
+    paths:
+      - 'src/**'
+      - 'build.gradle'
+      - 'gradle.properties'
+      - 'settings.gradle'
+      - '.github/workflows/build.yml'
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Recuperer le depot
+      - name: Checkout source
         uses: actions/checkout@v4
 
-      - name: Installer Java 8
+      - name: Set up Java 8
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '8'
 
-      - name: Installer Gradle
+      - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '6.9.1'
 
-      - name: Extraire le projet
-        run: |
-          unzip -oq Rickiverse-Forge-1.16.5-Source-FIX3.zip -d source
+      - name: Clean ForgeGradle cache
+        run: rm -rf "$HOME/.gradle/caches/forge_gradle"
 
-      - name: Verifier les fichiers
+      - name: Check configuration
         run: |
-          ls -la source
-          test -f source/build.gradle
-          test -f source/src/main/resources/META-INF/mods.toml
+          java -version
+          gradle --version
+          cat gradle.properties
+          grep -n "mappings\|net.minecraftforge:forge" build.gradle
 
-      - name: Compiler RICKIVERSE
-        run: |
-          cd source
-          gradle clean build --no-daemon --stacktrace
+      - name: Compile RICKIVERSE
+        run: gradle clean build --no-daemon --stacktrace
 
-      - name: Recuperer le JAR
+      - name: Upload mod JAR
         if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: RICKIVERSE-1.16.5
-          path: source/build/libs/*.jar
+          name: Rickiverse-Forge-1.16.5
+          path: build/libs/*.jar
           if-no-files-found: error

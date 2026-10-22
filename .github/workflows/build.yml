@@ -36,8 +36,10 @@ jobs:
         run: |
           java -version
           gradle --version
-          cat gradle.properties
-          grep -n "mappings\|net.minecraftforge:forge" build.gradle
+          echo "Fichiers présents à la racine :"
+          ls -la
+          echo "Recherche des fichiers Gradle :"
+          find . -maxdepth 4 \( -name "build.gradle" -o -name "gradle.properties" -o -name "settings.gradle" \) -print
 
       - name: Compile RICKIVERSE
         run: gradle clean build --no-daemon --stacktrace
